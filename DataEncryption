@@ -1,0 +1,64 @@
+using System;
+using System.Security.Cryptography;
+using System.Text;
+
+/// <summary>
+/// 数据加密
+/// </summary>
+public class DataEncryption
+{
+    public class DESEncrypt
+    {
+
+        #region ========加密========
+        /// <summary> 
+        /// 加密数据 
+        /// </summary> 
+        /// <param name="Text">要加密的内容</param> 
+        /// <param name="sKey">key，必须为32位</param> 
+        /// <returns></returns> 
+        public static string Encrypt(string Text, string sKey)
+        {
+            byte[] keyArray = UTF8Encoding.UTF8.GetBytes(sKey);
+            RijndaelManaged encryption = new RijndaelManaged();
+            encryption.Key = keyArray;
+            encryption.Mode = CipherMode.ECB;
+            encryption.Padding = PaddingMode.PKCS7;
+            ICryptoTransform cTransform = encryption.CreateEncryptor();
+            byte[] _EncryptArray = UTF8Encoding.UTF8.GetBytes(Text);
+            byte[] resultArray = cTransform.TransformFinalBlock(_EncryptArray, 0, _EncryptArray.Length);
+            return Convert.ToBase64String(resultArray, 0, resultArray.Length);
+        }
+
+        #endregion
+
+        #region ========解密========
+        /// <summary> 
+        /// 解密数据 
+        /// </summary> 
+        /// <param name="Text">要解密的内容</param> 
+        /// <param name="sKey">key，必须为32位，要和加密时的key相同</param> 
+        /// <returns></returns> 
+        public static string Decrypt(string Text, string sKey)
+        {
+            try { 
+            byte[] keyArray = UTF8Encoding.UTF8.GetBytes(sKey);
+            RijndaelManaged decipher = new RijndaelManaged();
+            decipher.Key = keyArray;
+            decipher.Mode = CipherMode.ECB;
+            decipher.Padding = PaddingMode.PKCS7;
+            ICryptoTransform cTransform = decipher.CreateDecryptor();
+            byte[] _EncryptArray = Convert.FromBase64String(Text);
+            byte[] resultArray = cTransform.TransformFinalBlock(_EncryptArray, 0, _EncryptArray.Length);
+            return UTF8Encoding.UTF8.GetString(resultArray);
+            }
+            catch
+            {
+                return "解密错误";
+            }
+        }
+
+        #endregion
+
+    }
+}
