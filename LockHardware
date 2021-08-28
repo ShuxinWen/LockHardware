@@ -1,0 +1,142 @@
+using System.IO;
+using System.Net.NetworkInformation;
+using UnityEngine;
+using static DataEncryption;
+
+public class LockHardware : MonoBehaviour
+{
+    //需要加密的字符串
+    string encrypt = string.Empty;
+    //加密后的字符串
+    string desEncrypt = string.Empty;
+    //key，加密和解密都需要用到
+    readonly string key = "45621488631456644633443346324661";
+    //文件路径
+    string path;
+    //程序第一运行
+    readonly string firstPlayStr = "这是程序的第一次运行！";
+    // Start is called before the first frame update
+    void Start()
+    {
+        //这里加密一条数据用来初始化第一次
+        Debug.Log(DESEncrypt.Encrypt(firstPlayStr, key));
+        # region 测试
+        //encrypt = "我是测试数据123";
+        //desEncrypt = DESEncrypt.Encrypt(encrypt, key);
+        //Debug.Log(encrypt + ">>加密结果为>>" + desEncrypt);
+        //Debug.Log(desEncrypt + ">>解密结果为>>" + DESEncrypt.Decrypt(desEncrypt, key));
+        //Debug.Log("MAC地址为：" + GetMacAddress());
+        //string str = SystemInfo.deviceUniqueIdentifier;
+        //Debug.Log("设备唯一标识为："+str);
+        # endregion
+        //读取数据
+        path = Application.streamingAssetsPath + "/info.txt";
+        string readString = DESEncrypt.Decrypt(ReadTxt(), key);
+        //解密后的数据是程序第一次运行的数据
+        if (readString == firstPlayStr)
+        {
+            //写入唯一标识的加密数据
+            WriteTxt(new string[] { DESEncrypt.Encrypt(SystemInfo.deviceUniqueIdentifier, key) });
+        }
+        else
+        {
+            //和本机设备标识对比
+            if(DESEncrypt.Decrypt(readString, key)== SystemInfo.deviceUniqueIdentifier)
+            {
+                //验证通过
+            }
+            else
+            {
+                //验证失败
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#else
+             Application.Quit();
+#endif
+            }
+        }
+    }
+
+
+    // Update is called once per frame
+    void Update()
+    {
+    }
+    /// <summary>
+    /// 获取MAC地址（物理地址）
+    /// </summary>
+    /// <returns></returns>
+    private static string GetMacAddress()
+    {
+        string physicalAddress = "";
+        NetworkInterface[] allInfo = NetworkInterface.GetAllNetworkInterfaces();
+        foreach (NetworkInterface adaper in allInfo)
+        {
+            if (adaper.Description == "en0")
+            {
+                physicalAddress = adaper.GetPhysicalAddress().ToString();
+                break;
+            }
+            else
+            {
+                physicalAddress = adaper.GetPhysicalAddress().ToString();
+                if (physicalAddress != "")
+                {
+                    break;
+                }
+            }
+        }
+        return physicalAddress;
+    }
+
+    /// <summary>
+    /// 写入数据
+    /// </summary>
+    /// <param name="contents"></param>
+    public void WriteTxt(string[] contents)
+    {
+        if (!File.Exists(path))
+        {
+            //文件不存在，退出程序
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+             Application.Quit();
+#endif
+        }
+        else
+        {
+            StreamWriter sw = new StreamWriter(path);
+            foreach (var item in contents)
+            {
+                sw.WriteLine(item);
+            }
+            sw.Close();
+        }
+    }
+    /// <summary>
+    /// 读取数据
+    /// </summary>
+    /// <returns></returns>
+    private string ReadTxt()
+    {
+        string str = string.Empty;
+        //如果有数据就读
+        if (File.Exists(path))
+        {
+            StreamReader sr = new StreamReader(path);
+            str = sr.ReadToEnd();
+            sr.Close();
+        }
+        else
+        {
+            //没有数据直接退出
+#if UNITY_EDITOR
+           UnityEditor.EditorApplication.isPlaying = false;
+#else
+             Application.Quit();
+#endif
+        }
+        return str;
+    }
+}
