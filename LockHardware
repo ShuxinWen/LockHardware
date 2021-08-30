@@ -41,7 +41,7 @@ public class LockHardware : MonoBehaviour
         else
         {
             //和本机设备标识对比
-            if(DESEncrypt.Decrypt(readString, key)== SystemInfo.deviceUniqueIdentifier)
+            if (SystemInfo.deviceUniqueIdentifier.Equals(readString))
             {
                 //验证通过
             }
